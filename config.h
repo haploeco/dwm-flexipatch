@@ -167,33 +167,36 @@ static const char dmenufont[]       = "SauceCodePro Nerd Font:size=13:antialias=
 
 static char c000000[]                    = "#000000"; // placeholder value
 
+/* static char normfgcolor[]                = "#240463"; */
 static char normfgcolor[]                = "#afc2c2";
 static char normbgcolor[]                = "#16161e";
 static char normbordercolor[]            = "#292e42";
 static char normfloatcolor[]             = "#db8fd9";
 
-static char selfgcolor[]                 = "#16161e";
-static char selbgcolor[]                 = "#3b4261";
+static char selfgcolor[]                 = "#7aa2f7";
+static char selbgcolor[]                 = "#282a36";
+/* #3b4261 */
 static char selbordercolor[]             = "#7aa2f7";
 static char selfloatcolor[]              = "#005577";
 
 static char titlenormfgcolor[]           = "#7aa2f7";
-static char titlenormbgcolor[]           = "#222222";
+static char titlenormbgcolor[]           = "#16161e";
 static char titlenormbordercolor[]       = "#444444";
 static char titlenormfloatcolor[]        = "#db8fd9";
 
 static char titleselfgcolor[]            = "#eeeeee";
-static char titleselbgcolor[]            = "#005577";
+static char titleselbgcolor[]            = "#282a36";
+/* static char titleselbgcolor[]            = "#1a1b26"; */
 static char titleselbordercolor[]        = "#005577";
 static char titleselfloatcolor[]         = "#005577";
 
-static char tagsnormfgcolor[]            = "#bbbbbb";
-static char tagsnormbgcolor[]            = "#222222";
+static char tagsnormfgcolor[]            = "#7aa2f7";
+static char tagsnormbgcolor[]            = "#16161e";
 static char tagsnormbordercolor[]        = "#444444";
 static char tagsnormfloatcolor[]         = "#db8fd9";
 
-static char tagsselfgcolor[]             = "#eeeeee";
-static char tagsselbgcolor[]             = "#005577";
+static char tagsselfgcolor[]             = "#7aa2f7";
+static char tagsselbgcolor[]             = "#282a36";
 static char tagsselbordercolor[]         = "#005577";
 static char tagsselfloatcolor[]          = "#005577";
 
@@ -331,7 +334,7 @@ static char *colors[][ColCount] = {
 	/*                       fg                bg                border                float */
 	[SchemeNorm]         = { normfgcolor,      normbgcolor,      normbordercolor,      normfloatcolor },
 	[SchemeSel]          = { selfgcolor,       selbgcolor,       selbordercolor,       selfloatcolor },
-	[SchemeTitleNorm]    = { normfgcolor, normbgcolor, titlenormbordercolor, titlenormfloatcolor },
+	[SchemeTitleNorm]    = { titlenormfgcolor, titlenormbgcolor, titlenormbordercolor, titlenormfloatcolor },
 	[SchemeTitleSel]     = { titleselfgcolor,  titleselbgcolor,  titleselbordercolor,  titleselfloatcolor },
 	[SchemeTagsNorm]     = { tagsnormfgcolor,  tagsnormbgcolor,  tagsnormbordercolor,  tagsnormfloatcolor },
 	[SchemeTagsSel]      = { tagsselfgcolor,   tagsselbgcolor,   tagsselbordercolor,   tagsselfloatcolor },
@@ -499,12 +502,17 @@ static const Rule rules[] = {
 	 *	WM_WINDOW_ROLE(STRING) = role
 	 *	_NET_WM_WINDOW_TYPE(ATOM) = wintype
 	 */
-	RULE(.wintype = WTYPE "DIALOG", .isfloating = 1)
+	RULE(.wintype = WTYPE "DIALOG", .iscentered = 1, .isfloating = 1)
 	RULE(.wintype = WTYPE "UTILITY", .isfloating = 1)
 	RULE(.wintype = WTYPE "TOOLBAR", .isfloating = 1)
 	RULE(.wintype = WTYPE "SPLASH", .isfloating = 1)
-	RULE(.class = "Gimp", .tags = 1 << 4)
-	RULE(.class = "Firefox", .tags = 1 << 7)
+	RULE(.class = "Gimp", .isfloating = 1)
+	RULE(.class = "firefox", .tags = 1 << 8)
+	RULE(.class = "Wavebox", .tags = 1 << 8)
+    RULE(.class = "Slack", .tags = 1 << 4)
+    RULE(.class = "Keybase", .tags = 1 << 4)
+    RULE(.class = "discord", .tags = 1 << 4)
+    RULE(.class = "1Password", .tags = 1 << 7)
 	#if RENAMED_SCRATCHPADS_PATCH
 	RULE(.instance = "spterm", .scratchkey = 's', .isfloating = 1)
 	#elif SCRATCHPADS_PATCH
@@ -636,7 +644,7 @@ static const int nmaster     = 1;    /* number of clients in master area */
 #if FLEXTILE_DELUXE_LAYOUT
 static const int nstack      = 0;    /* number of clients in primary stack area */
 #endif // FLEXTILE_DELUXE_LAYOUT
-static const int resizehints = 0;    /* 1 means respect size hints in tiled resizals */
+static const int resizehints = 1;    /* 1 means respect size hints in tiled resizals */
 static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen window */
 #if DECORATION_HINTS_PATCH
 static const int decorhints  = 1;    /* 1 means respect decoration hints */
@@ -1127,6 +1135,10 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_grave,            removescratch,    {.ui = 0 } },
 	{ 0,                            XF86XK_Explorer,     togglescratch,    {.ui = 1 } },
 	{ 0,                            XF86XK_Calculator,   togglescratch,    {.ui = 2 } },
+  	{ 0,                            XF86XK_AudioPlay,    spawn,  {.v = playpause } },
+	{ 0,                            XF86XK_AudioNext,    spawn,  {.v = medianext } },
+	{ 0,                            XF86XK_AudioPrev,    spawn,  {.v = mediaprev } },
+
 	#endif // SCRATCHPADS_PATCH | RENAMED_SCRATCHPADS_PATCH
 	#if UNFLOATVISIBLE_PATCH
 	{ MODKEY|Mod1Mask,              XK_space,      unfloatvisible,         {0} },
@@ -1307,9 +1319,6 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_Escape,     mpdcontrol,             {0} },
 	#endif // MPDCONTROL_PATCH
   /* Haplo - My media keys */
-	{ 0,                            XF86XK_AudioPlay,    spawn,  {.v = playpause } },
-	{ 0,                            XF86XK_AudioNext,    spawn,  {.v = medianext } },
-	{ 0,                            XF86XK_AudioPrev,    spawn,  {.v = mediaprev } },
 	TAGKEYS(                        XK_1,                                  0)
 	TAGKEYS(                        XK_2,                                  1)
 	TAGKEYS(                        XK_3,                                  2)
