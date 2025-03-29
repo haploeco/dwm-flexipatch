@@ -1,5 +1,5 @@
 void
-loadxrdb()
+load_xresources()
 {
 	Display *display;
 	char * resm;
@@ -123,7 +123,7 @@ loadxrdb()
 void
 xrdb(const Arg *arg)
 {
-	loadxrdb();
+	load_xresources();
 	int i;
 	for (i = 0; i < LENGTH(colors); i++)
 		scheme[i] = drw_scm_create(drw, colors[i],
@@ -132,7 +132,11 @@ xrdb(const Arg *arg)
 		#endif // BAR_ALPHA_PATCH
 		ColCount
 		);
-	focus(NULL);
+	#if BAR_SYSTRAY_PATCH && !BAR_ALPHA_PATCH
+	if (systray) {
+		XMoveWindow(dpy, systray->win, -32000, -32000);
+	}
+	#endif // BAR_SYSTRAY_PATCH
 	arrange(NULL);
+	focus(NULL);
 }
-
