@@ -1,5 +1,9 @@
 /* See LICENSE file for copyright and license details. */
 
+/* Helper macros for spawning commands */
+#define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
+#define CMD(...)   { .v = (const char*[]){ __VA_ARGS__, NULL } }
+
 /* appearance */
 #if ROUNDED_CORNERS_PATCH
 static const unsigned int borderpx       = 3;   /* border pixel of windows */
@@ -7,6 +11,12 @@ static const int corner_radius           = 10;
 #else
 static const unsigned int borderpx       = 1;   /* border pixel of windows */
 #endif // ROUNDED_CORNERS_PATCH
+#if BAR_BORDER_PATCH
+/* This allows the bar border size to be explicitly set separately from borderpx.
+ * If left as 0 then it will default to the borderpx value of the monitor and will
+ * automatically update with setborderpx. */
+static const unsigned int barborderpx    = 0;  /* border pixel of bar */
+#endif // BAR_BORDER_PATCH
 static const unsigned int snap           = 32;  /* snap pixel */
 #if SWALLOW_PATCH
 static const int swallowfloating         = 0;   /* 1 means swallow floating windows by default */
@@ -140,6 +150,9 @@ static int floatindicatortype            = INDICATOR_TOP_LEFT_SQUARE;
 static int fakefsindicatortype           = INDICATOR_PLUS;
 static int floatfakefsindicatortype      = INDICATOR_PLUS_AND_LARGER_SQUARE;
 #endif // FAKEFULLSCREEN_CLIENT_PATCH
+#if ALWAYSONTOP_PATCH
+static int aotindicatortype              = INDICATOR_TOP_LEFT_LARGER_SQUARE;
+#endif // ALWAYSONTOP_PATCH
 #if ONLYQUITONEMPTY_PATCH
 static const int quit_empty_window_count = 0;   /* only allow dwm to quit if no (<= count) windows are open */
 #endif // ONLYQUITONEMPTY_PATCH
@@ -210,6 +223,11 @@ static char urgbgcolor[]                 = "#4F355B";
 static char urgbordercolor[]             = "#ff0000";
 static char urgfloatcolor[]              = "#db8fd9";
 
+#if BAR_LTSYMBOL_SCHEME_PATCH
+static char ltsymbolfgcolor[]            = "#222222";
+static char ltsymbolbgcolor[]            = "#fe9877";
+#endif // BAR_LTSYMBOL_SCHEME_PATCH
+
 #if RENAMED_SCRATCHPADS_PATCH
 static char scratchselfgcolor[]          = "#FFF7D4";
 static char scratchselbgcolor[]          = "#77547E";
@@ -272,6 +290,9 @@ static const unsigned int alphas[][3] = {
 	[SchemeHidNorm]      = { OPAQUE, baralpha, borderalpha },
 	[SchemeHidSel]       = { OPAQUE, baralpha, borderalpha },
 	[SchemeUrg]          = { OPAQUE, baralpha, borderalpha },
+	#if BAR_LTSYMBOL_SCHEME_PATCH
+	[SchemeLtSymbol]     = { OPAQUE, baralpha, borderalpha },
+	#endif // BAR_LTSYMBOL_SCHEME_PATCH
 	#if RENAMED_SCRATCHPADS_PATCH
 	[SchemeScratchSel]  = { OPAQUE, baralpha, borderalpha },
 	[SchemeScratchNorm] = { OPAQUE, baralpha, borderalpha },
@@ -327,6 +348,9 @@ static const int color_ptrs[][ColCount] = {
 	[SchemeHidNorm]      = { 5,      0,      0,      -1 },
 	[SchemeHidSel]       = { 6,      -1,     -1,     -1 },
 	[SchemeUrg]          = { 7,      9,      9,      15 },
+	#if BAR_LTSYMBOL_SCHEME_PATCH
+	[SchemeLtSymbol]     = { -1,     3,      0,       0 },
+	#endif // BAR_LTSYMBOL_SCHEME_PATCH
 };
 #endif // BAR_VTCOLORS_PATCH
 
@@ -341,6 +365,9 @@ static char *colors[][ColCount] = {
 	[SchemeHidNorm]      = { hidnormfgcolor,   hidnormbgcolor,   c000000,              c000000 },
 	[SchemeHidSel]       = { hidselfgcolor,    hidselbgcolor,    c000000,              c000000 },
 	[SchemeUrg]          = { urgfgcolor,       urgbgcolor,       urgbordercolor,       urgfloatcolor },
+	#if BAR_LTSYMBOL_SCHEME_PATCH
+	[SchemeLtSymbol]     = { ltsymbolfgcolor,  ltsymbolbgcolor,  c000000,              c000000 },
+	#endif // BAR_LTSYMBOL_SCHEME_PATCH
 	#if RENAMED_SCRATCHPADS_PATCH
 	[SchemeScratchSel]  = { scratchselfgcolor, scratchselbgcolor, scratchselbordercolor, scratchselfloatcolor },
 	[SchemeScratchNorm] = { scratchnormfgcolor, scratchnormbgcolor, scratchnormbordercolor, scratchnormfloatcolor },
@@ -400,6 +427,13 @@ static char *statuscolors[][ColCount] = {
 #if BAR_LAYOUTMENU_PATCH
 static const char *layoutmenu_cmd = "layoutmenu.sh";
 #endif
+
+#if BAR_LAUNCHER_PATCH
+static const Launcher launchers[] = {
+	/* icon to display      command        */
+	{ "surf",               CMD("surf", "duckduckgo.com") },
+};
+#endif // BAR_LAUNCHER_PATCH
 
 #if COOL_AUTOSTART_PATCH
 static const char *const autostart[] = {
@@ -509,10 +543,10 @@ static const Rule rules[] = {
 	RULE(.class = "Gimp", .isfloating = 1)
 	RULE(.class = "firefox", .tags = 1 << 8)
 	RULE(.class = "Wavebox", .tags = 1 << 8)
-  RULE(.class = "Slack", .tags = 1 << 4)
-  RULE(.class = "Keybase", .tags = 1 << 4)
-  RULE(.class = "discord", .tags = 1 << 4)
-  // RULE(.class = "1Password", .tags = 1 << 7)
+        RULE(.class = "Slack", .tags = 1 << 4)
+        RULE(.class = "Keybase", .tags = 1 << 4)
+        RULE(.class = "discord", .tags = 1 << 4)
+        // RULE(.class = "1Password", .tags = 1 << 7)
 	#if RENAMED_SCRATCHPADS_PATCH
 	RULE(.instance = "spterm", .scratchkey = 's', .isfloating = 1)
 	#elif SCRATCHPADS_PATCH
@@ -564,6 +598,9 @@ static const BarRule barrules[] = {
 	#if BAR_STATUSBUTTON_PATCH
 	{ -1,        0,     BAR_ALIGN_LEFT,   width_stbutton,           draw_stbutton,          click_stbutton,          NULL,                    "statusbutton" },
 	#endif // BAR_STATUSBUTTON_PATCH
+	#if BAR_LAUNCHER_PATCH
+	{ -1,        0,     BAR_ALIGN_LEFT,   width_launcher,           draw_launcher,          click_launcher,          NULL,                    "launcher" },
+	#endif // BAR_LAUNCHER_PATCH
 	#if BAR_POWERLINE_TAGS_PATCH
 	{  0,        0,     BAR_ALIGN_LEFT,   width_pwrl_tags,          draw_pwrl_tags,         click_pwrl_tags,         NULL,                    "powerline_tags" },
 	#endif // BAR_POWERLINE_TAGS_PATCH
@@ -646,6 +683,16 @@ static const int nstack      = 0;    /* number of clients in primary stack area 
 #endif // FLEXTILE_DELUXE_LAYOUT
 static const int resizehints = 1;    /* 1 means respect size hints in tiled resizals */
 static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen window */
+static const int refreshrate = 120;  /* refresh rate (per second) for client move/resize */
+#if PLACEMOUSE_PATCH
+static const int refreshrate_placemouse = 60; /* refresh rate (per second) for placemouse */
+#endif // PLACEMOUSE_PATCH
+#if DRAGMFACT_PATCH
+static const int refreshrate_dragmfact = 40; /* refresh rate (per second) for dragmfact */
+#endif // DRAGMFACT_PATCH
+#if DRAGCFACT_PATCH
+static const int refreshrate_dragcfact = 60; /* refresh rate (per second) for dragcfact */
+#endif // DRAGCFACT_PATCH
 #if DECORATION_HINTS_PATCH
 static const int decorhints  = 1;    /* 1 means respect decoration hints */
 #endif // DECORATION_HINTS_PATCH
@@ -912,6 +959,112 @@ static const Key on_empty_keys[] = {
 };
 #endif // ON_EMPTY_KEYS_PATCH
 
+#if XRESOURCES_PATCH
+/*
+* Xresources preferences to load at startup.
+*
+*     Name                      Type       Address
+*    ------------------------------------------------
+*     "nmaster"                 INTEGER    &nmaster
+*     "mfact"                   FLOAT      &mfact
+*     "color1"                  STRING     &color1
+*
+* In the Xresources file setting resources shoud be prefixed with "dwm.", e.g.
+*
+*    dwm.nmaster: 1
+*    dwm.mfact: 0.50
+*    dwm.color1: #FA6EFA
+*
+* Note that the const qualifier must be removed from the variables if you plan on
+* overriding them with values from Xresources. While resources can be reloaded
+* using the xrdb function some changes may only take effect following a restart.
+*/
+ResourcePref resources[] = {
+	/* Resource name            Type       Address                */
+	{ "normfgcolor",            STRING,    &normfgcolor },
+	{ "normbgcolor",            STRING,    &normbgcolor },
+	{ "normbordercolor",        STRING,    &normbordercolor },
+	{ "normfloatcolor",         STRING,    &normfloatcolor },
+	{ "selfgcolor",             STRING,    &selfgcolor },
+	{ "selbgcolor",             STRING,    &selbgcolor },
+	{ "selbordercolor",         STRING,    &selbordercolor },
+	{ "selfloatcolor",          STRING,    &selfloatcolor },
+	{ "titlenormfgcolor",       STRING,    &titlenormfgcolor },
+	{ "titlenormbgcolor",       STRING,    &titlenormbgcolor },
+	{ "titlenormbordercolor",   STRING,    &titlenormbordercolor },
+	{ "titlenormfloatcolor",    STRING,    &titlenormfloatcolor },
+	{ "titleselfgcolor",        STRING,    &titleselfgcolor },
+	{ "titleselbgcolor",        STRING,    &titleselbgcolor },
+	{ "titleselbordercolor",    STRING,    &titleselbordercolor },
+	{ "titleselfloatcolor",     STRING,    &titleselfloatcolor },
+	{ "tagsnormfgcolor",        STRING,    &tagsnormfgcolor },
+	{ "tagsnormbgcolor",        STRING,    &tagsnormbgcolor },
+	{ "tagsnormbordercolor",    STRING,    &tagsnormbordercolor },
+	{ "tagsnormfloatcolor",     STRING,    &tagsnormfloatcolor },
+	{ "tagsselfgcolor",         STRING,    &tagsselfgcolor },
+	{ "tagsselbgcolor",         STRING,    &tagsselbgcolor },
+	{ "tagsselbordercolor",     STRING,    &tagsselbordercolor },
+	{ "tagsselfloatcolor",      STRING,    &tagsselfloatcolor },
+	{ "hidnormfgcolor",         STRING,    &hidnormfgcolor },
+	{ "hidnormbgcolor",         STRING,    &hidnormbgcolor },
+	{ "hidselfgcolor",          STRING,    &hidselfgcolor },
+	{ "hidselbgcolor",          STRING,    &hidselbgcolor },
+	{ "urgfgcolor",             STRING,    &urgfgcolor },
+	{ "urgbgcolor",             STRING,    &urgbgcolor },
+	{ "urgbordercolor",         STRING,    &urgbordercolor },
+	{ "urgfloatcolor",          STRING,    &urgfloatcolor },
+	#if RENAMED_SCRATCHPADS_PATCH
+	{ "scratchselfgcolor",      STRING,    &scratchselfgcolor },
+	{ "scratchselbgcolor",      STRING,    &scratchselbgcolor },
+	{ "scratchselbordercolor",  STRING,    &scratchselbordercolor },
+	{ "scratchselfloatcolor",   STRING,    &scratchselfloatcolor },
+	{ "scratchnormfgcolor",     STRING,    &scratchnormfgcolor },
+	{ "scratchnormbgcolor",     STRING,    &scratchnormbgcolor },
+	{ "scratchnormbordercolor", STRING,    &scratchnormbordercolor },
+	{ "scratchnormfloatcolor",  STRING,    &scratchnormfloatcolor },
+	#endif // RENAMED_SCRATCHPADS_PATCH
+	#if BAR_FLEXWINTITLE_PATCH
+	{ "normTTBbgcolor",         STRING,    &normTTBbgcolor },
+	{ "normLTRbgcolor",         STRING,    &normLTRbgcolor },
+	{ "normMONObgcolor",        STRING,    &normMONObgcolor },
+	{ "normGRIDbgcolor",        STRING,    &normGRIDbgcolor },
+	{ "normGRD1bgcolor",        STRING,    &normGRD1bgcolor },
+	{ "normGRD2bgcolor",        STRING,    &normGRD2bgcolor },
+	{ "normGRDMbgcolor",        STRING,    &normGRDMbgcolor },
+	{ "normHGRDbgcolor",        STRING,    &normHGRDbgcolor },
+	{ "normDWDLbgcolor",        STRING,    &normDWDLbgcolor },
+	{ "normSPRLbgcolor",        STRING,    &normSPRLbgcolor },
+	{ "normfloatbgcolor",       STRING,    &normfloatbgcolor },
+	{ "actTTBbgcolor",          STRING,    &actTTBbgcolor },
+	{ "actLTRbgcolor",          STRING,    &actLTRbgcolor },
+	{ "actMONObgcolor",         STRING,    &actMONObgcolor },
+	{ "actGRIDbgcolor",         STRING,    &actGRIDbgcolor },
+	{ "actGRD1bgcolor",         STRING,    &actGRD1bgcolor },
+	{ "actGRD2bgcolor",         STRING,    &actGRD2bgcolor },
+	{ "actGRDMbgcolor",         STRING,    &actGRDMbgcolor },
+	{ "actHGRDbgcolor",         STRING,    &actHGRDbgcolor },
+	{ "actDWDLbgcolor",         STRING,    &actDWDLbgcolor },
+	{ "actSPRLbgcolor",         STRING,    &actSPRLbgcolor },
+	{ "actfloatbgcolor",        STRING,    &actfloatbgcolor },
+	{ "selTTBbgcolor",          STRING,    &selTTBbgcolor },
+	{ "selLTRbgcolor",          STRING,    &selLTRbgcolor },
+	{ "selMONObgcolor",         STRING,    &selMONObgcolor },
+	{ "selGRIDbgcolor",         STRING,    &selGRIDbgcolor },
+	{ "selGRD1bgcolor",         STRING,    &selGRD1bgcolor },
+	{ "selGRD2bgcolor",         STRING,    &selGRD2bgcolor },
+	{ "selGRDMbgcolor",         STRING,    &selGRDMbgcolor },
+	{ "selHGRDbgcolor",         STRING,    &selHGRDbgcolor },
+	{ "selDWDLbgcolor",         STRING,    &selDWDLbgcolor },
+	{ "selSPRLbgcolor",         STRING,    &selSPRLbgcolor },
+	{ "selfloatbgcolor",        STRING,    &selfloatbgcolor },
+	#endif // BAR_FLEXWINTITLE_PATCH
+	#if BAR_LTSYMBOL_SCHEME_PATCH
+	{ "ltsymbolfgcolor",        STRING,    &ltsymbolfgcolor },
+	{ "ltsymbolbgcolor",        STRING,    &ltsymbolbgcolor },
+	#endif // BAR_LTSYMBOL_SCHEME_PATCH
+};
+#endif // XRESOURCES_PATCH
+
 static const Key keys[] = {
 	/* modifier                     key            function                argument */
 	#if KEYMODES_PATCH
@@ -925,6 +1078,9 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_s,          rioresize,              {0} },
 	#endif // RIODRAW_PATCH
 	{ MODKEY,                       XK_b,          togglebar,              {0} },
+	#if TOGGLETOPBAR_PATCH
+	{ MODKEY|ShiftMask,             XK_b,          toggletopbar,           {0} },
+	#endif // TOGGLETOPBAR_PATCH
 	#if TAB_PATCH
 	{ MODKEY|ControlMask,           XK_b,          tabmode,                {-1} },
 	#endif // TAB_PATCH
@@ -944,6 +1100,12 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_Up,         focusdir,               {.i = 2 } }, // up
 	{ MODKEY,                       XK_Down,       focusdir,               {.i = 3 } }, // down
 	#endif // FOCUSDIR_PATCH
+	#if PLACEDIR_PATCH
+	{ MODKEY|ControlMask,           XK_Left,       placedir,               {.i = 0 } }, // left
+	{ MODKEY|ControlMask,           XK_Right,      placedir,               {.i = 1 } }, // right
+	{ MODKEY|ControlMask,           XK_Up,         placedir,               {.i = 2 } }, // up
+	{ MODKEY|ControlMask,           XK_Down,       placedir,               {.i = 3 } }, // down
+	#endif // PLACEDIR_PATCH
 	#if SWAPFOCUS_PATCH && PERTAG_PATCH
 	{ MODKEY,                       XK_s,          swapfocus,              {.i = -1 } },
 	#endif // SWAPFOCUS_PATCH
@@ -1012,22 +1174,22 @@ static const Key keys[] = {
 	#endif // INSETS_PATCH
 	{ MODKEY,                       XK_Return,     zoom,                   {0} },
 	#if VANITYGAPS_PATCH
-	{ MODKEY|Mod1Mask,              XK_u,          incrgaps,               {.i = +1 } },
-	{ MODKEY|Mod1Mask|ShiftMask,    XK_u,          incrgaps,               {.i = -1 } },
-	{ MODKEY|Mod1Mask,              XK_i,          incrigaps,              {.i = +1 } },
-	{ MODKEY|Mod1Mask|ShiftMask,    XK_i,          incrigaps,              {.i = -1 } },
-	{ MODKEY|Mod1Mask,              XK_o,          incrogaps,              {.i = +1 } },
-	{ MODKEY|Mod1Mask|ShiftMask,    XK_o,          incrogaps,              {.i = -1 } },
-	{ MODKEY|Mod1Mask,              XK_6,          incrihgaps,             {.i = +1 } },
-	{ MODKEY|Mod1Mask|ShiftMask,    XK_6,          incrihgaps,             {.i = -1 } },
-	{ MODKEY|Mod1Mask,              XK_7,          incrivgaps,             {.i = +1 } },
-	{ MODKEY|Mod1Mask|ShiftMask,    XK_7,          incrivgaps,             {.i = -1 } },
-	{ MODKEY|Mod1Mask,              XK_8,          incrohgaps,             {.i = +1 } },
-	{ MODKEY|Mod1Mask|ShiftMask,    XK_8,          incrohgaps,             {.i = -1 } },
-	{ MODKEY|Mod1Mask,              XK_9,          incrovgaps,             {.i = +1 } },
-	{ MODKEY|Mod1Mask|ShiftMask,    XK_9,          incrovgaps,             {.i = -1 } },
-	{ MODKEY|Mod1Mask,              XK_0,          togglegaps,             {0} },
-	{ MODKEY|Mod1Mask|ShiftMask,    XK_0,          defaultgaps,            {0} },
+	{ MODKEY|Mod4Mask,              XK_u,          incrgaps,               {.i = +1 } },
+	{ MODKEY|Mod4Mask|ShiftMask,    XK_u,          incrgaps,               {.i = -1 } },
+	{ MODKEY|Mod4Mask,              XK_i,          incrigaps,              {.i = +1 } },
+	{ MODKEY|Mod4Mask|ShiftMask,    XK_i,          incrigaps,              {.i = -1 } },
+	{ MODKEY|Mod4Mask,              XK_o,          incrogaps,              {.i = +1 } },
+	{ MODKEY|Mod4Mask|ShiftMask,    XK_o,          incrogaps,              {.i = -1 } },
+	{ MODKEY|Mod4Mask,              XK_6,          incrihgaps,             {.i = +1 } },
+	{ MODKEY|Mod4Mask|ShiftMask,    XK_6,          incrihgaps,             {.i = -1 } },
+	{ MODKEY|Mod4Mask,              XK_7,          incrivgaps,             {.i = +1 } },
+	{ MODKEY|Mod4Mask|ShiftMask,    XK_7,          incrivgaps,             {.i = -1 } },
+	{ MODKEY|Mod4Mask,              XK_8,          incrohgaps,             {.i = +1 } },
+	{ MODKEY|Mod4Mask|ShiftMask,    XK_8,          incrohgaps,             {.i = -1 } },
+	{ MODKEY|Mod4Mask,              XK_9,          incrovgaps,             {.i = +1 } },
+	{ MODKEY|Mod4Mask|ShiftMask,    XK_9,          incrovgaps,             {.i = -1 } },
+	{ MODKEY|Mod4Mask,              XK_0,          togglegaps,             {0} },
+	{ MODKEY|Mod4Mask|ShiftMask,    XK_0,          defaultgaps,            {0} },
 	#endif // VANITYGAPS_PATCH
 	#if ALT_TAB_PATCH
 	{ Mod1Mask,                     XK_Tab,        alttabstart,            {0} },
@@ -1047,19 +1209,20 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_backslash,  shiftview,              { .i = +1 } },
 	#endif // SHIFTVIEW_PATCH
 	#if SHIFTVIEW_CLIENTS_PATCH
-	{ MODKEY|Mod1Mask,              XK_Tab,        shiftviewclients,       { .i = -1 } },
-	{ MODKEY|Mod1Mask,              XK_backslash,  shiftviewclients,       { .i = +1 } },
+	{ MODKEY|Mod4Mask,              XK_Tab,        shiftviewclients,       { .i = -1 } },
+	{ MODKEY|Mod4Mask,              XK_backslash,  shiftviewclients,       { .i = +1 } },
 	#endif // SHIFTVIEW_CLIENTS_PATCH
 	#if SHIFTBOTH_PATCH
-	{ MODKEY|ControlMask,           XK_Left,       shiftboth,              { .i = -1 } }, // note keybinding conflict with focusadjacenttag tagandviewtoleft
-	{ MODKEY|ControlMask,           XK_Right,      shiftboth,              { .i = +1 } }, // note keybinding conflict with focusadjacenttag tagandviewtoright
+	{ MODKEY|ControlMask,           XK_Left,       shiftboth,              { .i = -1 } }, // note keybinding conflict with focusadjacenttag tagandviewtoleft placedir
+	{ MODKEY|ControlMask,           XK_Right,      shiftboth,              { .i = +1 } }, // note keybinding conflict with focusadjacenttag tagandviewtoright placedir
 	#endif // SHIFTBOTH_PATCH
 	#if SHIFTSWAPTAGS_PATCH && SWAPTAGS_PATCH
-	{ MODKEY|Mod1Mask|ShiftMask,    XK_Left,       shiftswaptags,          { .i = -1 } },
-	{ MODKEY|Mod1Mask|ShiftMask,    XK_Right,      shiftswaptags,          { .i = +1 } },
+	{ MODKEY|Mod4Mask|ShiftMask,    XK_Left,       shiftswaptags,          { .i = -1 } },
+	{ MODKEY|Mod4Mask|ShiftMask,    XK_Right,      shiftswaptags,          { .i = +1 } },
 	#endif // SHIFTSWAPTAGS_PATCH
 	#if BAR_WINTITLEACTIONS_PATCH
 	{ MODKEY|ControlMask,           XK_z,          showhideclient,         {0} },
+	{ MODKEY|ControlMask,           XK_s,          unhideall,              {0} },
 	#endif // BAR_WINTITLEACTIONS_PATCH
 	{ MODKEY|ShiftMask,             XK_c,          killclient,             {0} },
 	#if KILLUNSEL_PATCH
@@ -1110,11 +1273,14 @@ static const Key keys[] = {
 	{ MODKEY|Mod5Mask,              XK_Tab,        rotatelayoutaxis,       {.i = -2 } },   /* flextile, 2 = master axis */
 	{ MODKEY|Mod5Mask|ShiftMask,    XK_Tab,        rotatelayoutaxis,       {.i = -3 } },   /* flextile, 3 = stack axis */
 	{ MODKEY|Mod5Mask|Mod1Mask,     XK_Tab,        rotatelayoutaxis,       {.i = -4 } },   /* flextile, 4 = secondary stack axis */
-	 MODKEY|ControlMask,           XK_Return,     mirrorlayout,           {0} },          /* flextile, flip master and stack areas */
+	{ MODKEY|ControlMask,           XK_Return,     mirrorlayout,           {0} },          /* flextile, flip master and stack areas */
 	#endif // FLEXTILE_DELUXE_LAYOUT
 	{ MODKEY,                       XK_space,      zoom,                   {0} },
 	{ MODKEY|ControlMask,           XK_space,      setlayout,              {0} },
 	{ MODKEY|ShiftMask,             XK_space,      togglefloating,         {0} },
+	#if ALWAYSONTOP_PATCH
+	{ MODKEY|ShiftMask,             XK_space,      togglealwaysontop,      {0} },
+	#endif // ALWAYSONTOP_PATCH
 	#if MAXIMIZE_PATCH
 	{ MODKEY|ControlMask|ShiftMask, XK_h,          togglehorizontalmax,    {0} },
 	{ MODKEY|ControlMask|ShiftMask, XK_l,          togglehorizontalmax,    {0} },
@@ -1224,6 +1390,9 @@ static const Key keys[] = {
 	{ MODKEY|Mod1Mask,              XK_Right,      switchtag,              { .ui = SWITCHTAG_RIGHT | SWITCHTAG_TAG | SWITCHTAG_VIEW } },
 	{ MODKEY|Mod1Mask,              XK_Left,       switchtag,              { .ui = SWITCHTAG_LEFT  | SWITCHTAG_TAG | SWITCHTAG_VIEW } },
 	#endif // BAR_TAGGRID_PATCH
+	#if MOVECENTER_PATCH
+	{ MODKEY,                       XK_x,          movecenter,             {0} }, // note keybinding conflict with killunsel
+	#endif // MOVECENTER_PATCH
 	#if MOVEPLACE_PATCH
 	{ MODKEY,                       XK_KP_7,       moveplace,              {.ui = WIN_NW }},   /* XK_KP_Home,  */
 	{ MODKEY,                       XK_KP_8,       moveplace,              {.ui = WIN_N  }},   /* XK_KP_Up,    */
@@ -1319,7 +1488,6 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_F2,         mpdchange,              {.i = +1} },
 	{ MODKEY,                       XK_Escape,     mpdcontrol,             {0} },
 	#endif // MPDCONTROL_PATCH
-  /* Haplo - My media keys */
 	TAGKEYS(                        XK_1,                                  0)
 	TAGKEYS(                        XK_2,                                  1)
 	TAGKEYS(                        XK_3,                                  2)
@@ -1437,6 +1605,9 @@ static const Signal signals[] = {
 	{ "focusstack",              focusstack },
 	{ "setmfact",                setmfact },
 	{ "togglebar",               togglebar },
+	#if TOGGLETOPBAR_PATCH
+	{ "toggletopbar",            toggletopbar },
+	#endif // TOGGLETOPBAR_PATCH
 	{ "incnmaster",              incnmaster },
 	{ "togglefloating",          togglefloating },
 	{ "focusmon",                focusmon },
@@ -1482,6 +1653,9 @@ static const Signal signals[] = {
 	#if CFACTS_PATCH
 	{ "setcfact",                setcfact },
 	#endif // CFACTS_PATCH
+	#if MOVECENTER_PATCH
+	{ "movecenter",              movecenter },
+	#endif // MOVECENTER_PATCH
 	#if MOVEPLACE_PATCH
 	{ "moveplace",               moveplace },
 	#endif // MOVEPLACE_PATCH
@@ -1635,6 +1809,9 @@ static IPCCommand ipccommands[] = {
 	IPCCOMMAND( tag, 1, {ARG_TYPE_UINT} ),
 	IPCCOMMAND( tagmon, 1, {ARG_TYPE_UINT} ),
 	IPCCOMMAND( togglebar, 1, {ARG_TYPE_NONE} ),
+	#if TOGGLETOPBAR_PATCH
+	IPCCOMMAND( toggletopbar, 1, {ARG_TYPE_NONE} ),
+	#endif // TOGGLETOPBAR_PATCH
 	IPCCOMMAND( togglefloating, 1, {ARG_TYPE_NONE} ),
 	IPCCOMMAND( toggletag, 1, {ARG_TYPE_UINT} ),
 	IPCCOMMAND( toggleview, 1, {ARG_TYPE_UINT} ),
@@ -1699,6 +1876,9 @@ static IPCCommand ipccommands[] = {
 	IPCCOMMAND( mpdchange, 1, {ARG_TYPE_SINT} ),
 	IPCCOMMAND( mpdcontrol, 1, {ARG_TYPE_NONE} ),
 	#endif // MPDCONTROL_PATCH
+	#if MOVECENTER_PATCH
+	IPCCOMMAND( movecenter, 1, {ARG_TYPE_NONE} ),
+	#endif // MOVECENTER_PATCH
 	#if MOVEPLACE_PATCH
 	IPCCOMMAND( moveplace, 1, {ARG_TYPE_UINT} ),
 	#endif // MOVEPLACE_PATCH
