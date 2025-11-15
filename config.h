@@ -157,13 +157,13 @@ static void (*bartabmonfns[])(Monitor *) = { NULL /* , customlayoutfn */ };
 static const char font[]                 = "monospace 10";
 #else
 static const char *fonts[]          = {
-	"SauceCodePro Nerd Font:size=13:antialias=true:autohint=true",
+	"Berkeley Mono:size=13:antialias=true:autohint=true",
 	"Hack Nerd Font:size=13:antialias=true:autohint=true",
 	/* "Symbola:size=13:antialias=true:autohint=true", */
 	"EmojiOne:size=13:antialias=true:autohint=true",
 };
 #endif // BAR_PANGO_PATCH
-static const char dmenufont[]       = "SauceCodePro Nerd Font:size=13:antialias=true:autohint=true";
+static const char dmenufont[]       = "Berkeley Mono:size=13:antialias=true:autohint=true";
 
 static char c000000[]                    = "#000000"; // placeholder value
 
@@ -173,13 +173,13 @@ static char normbgcolor[]                = "#16161e";
 static char normbordercolor[]            = "#292e42";
 static char normfloatcolor[]             = "#db8fd9";
 
-static char selfgcolor[]                 = "#7aa2f7";
+static char selfgcolor[]                 = "#17a88b";
 static char selbgcolor[]                 = "#282a36";
 /* #3b4261 */
-static char selbordercolor[]             = "#7aa2f7";
+static char selbordercolor[]             = "#17a88b";
 static char selfloatcolor[]              = "#005577";
 
-static char titlenormfgcolor[]           = "#7aa2f7";
+static char titlenormfgcolor[]           = "#17a88b";
 static char titlenormbgcolor[]           = "#16161e";
 static char titlenormbordercolor[]       = "#444444";
 static char titlenormfloatcolor[]        = "#db8fd9";
@@ -190,12 +190,12 @@ static char titleselbgcolor[]            = "#282a36";
 static char titleselbordercolor[]        = "#005577";
 static char titleselfloatcolor[]         = "#005577";
 
-static char tagsnormfgcolor[]            = "#7aa2f7";
+static char tagsnormfgcolor[]            = "#17a88b";
 static char tagsnormbgcolor[]            = "#16161e";
 static char tagsnormbordercolor[]        = "#444444";
 static char tagsnormfloatcolor[]         = "#db8fd9";
 
-static char tagsselfgcolor[]             = "#7aa2f7";
+static char tagsselfgcolor[]             = "#17a88b";
 static char tagsselbgcolor[]             = "#282a36";
 static char tagsselbordercolor[]         = "#005577";
 static char tagsselfloatcolor[]          = "#005577";
@@ -509,10 +509,10 @@ static const Rule rules[] = {
 	RULE(.class = "Gimp", .isfloating = 1)
 	RULE(.class = "firefox", .tags = 1 << 8)
 	RULE(.class = "Wavebox", .tags = 1 << 8)
-    RULE(.class = "Slack", .tags = 1 << 4)
-    RULE(.class = "Keybase", .tags = 1 << 4)
-    RULE(.class = "discord", .tags = 1 << 4)
-    RULE(.class = "1Password", .tags = 1 << 7)
+  RULE(.class = "Slack", .tags = 1 << 4)
+  RULE(.class = "Keybase", .tags = 1 << 4)
+  RULE(.class = "discord", .tags = 1 << 4)
+  // RULE(.class = "1Password", .tags = 1 << 7)
 	#if RENAMED_SCRATCHPADS_PATCH
 	RULE(.instance = "spterm", .scratchkey = 's', .isfloating = 1)
 	#elif SCRATCHPADS_PATCH
@@ -1110,7 +1110,7 @@ static const Key keys[] = {
 	{ MODKEY|Mod5Mask,              XK_Tab,        rotatelayoutaxis,       {.i = -2 } },   /* flextile, 2 = master axis */
 	{ MODKEY|Mod5Mask|ShiftMask,    XK_Tab,        rotatelayoutaxis,       {.i = -3 } },   /* flextile, 3 = stack axis */
 	{ MODKEY|Mod5Mask|Mod1Mask,     XK_Tab,        rotatelayoutaxis,       {.i = -4 } },   /* flextile, 4 = secondary stack axis */
-	{ MODKEY|ControlMask,           XK_Return,     mirrorlayout,           {0} },          /* flextile, flip master and stack areas */
+	 MODKEY|ControlMask,           XK_Return,     mirrorlayout,           {0} },          /* flextile, flip master and stack areas */
 	#endif // FLEXTILE_DELUXE_LAYOUT
 	{ MODKEY,                       XK_space,      zoom,                   {0} },
 	{ MODKEY|ControlMask,           XK_space,      setlayout,              {0} },
@@ -1131,11 +1131,12 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_grave,      removescratch,          {.v = scratchpadcmd } },
 	#elif SCRATCHPADS_PATCH
 	{ MODKEY|ShiftMask,             XK_Return,           togglescratch,    {.ui = 0 } },
-	{ MODKEY|ControlMask,           XK_grave,            setscratch,       {.ui = 0 } },
-	{ MODKEY|ShiftMask,             XK_grave,            removescratch,    {.ui = 0 } },
+	{ MODKEY|ControlMask,           XK_grave,            setscratch,       {.ui = 3 } },
+	{ MODKEY|ShiftMask,             XK_grave,            removescratch,    {.ui = 3 } },
+  { MODKEY|Mod1Mask,              XK_grave,            togglescratch,    {.ui = 3 } },
 	{ 0,                            XF86XK_Explorer,     togglescratch,    {.ui = 1 } },
 	{ 0,                            XF86XK_Calculator,   togglescratch,    {.ui = 2 } },
-  	{ 0,                            XF86XK_AudioPlay,    spawn,  {.v = playpause } },
+ 	{ 0,                            XF86XK_AudioPlay,    spawn,  {.v = playpause } },
 	{ 0,                            XF86XK_AudioNext,    spawn,  {.v = medianext } },
 	{ 0,                            XF86XK_AudioPrev,    spawn,  {.v = mediaprev } },
 
